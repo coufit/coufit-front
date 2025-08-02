@@ -42,3 +42,12 @@ export const DialogTitle: React.FC<
     {...props}
   />
 );
+
+export const DialogDescription: React.FC<
+  React.ComponentProps<typeof DialogPrimitive.Description>
+> = ({ className = "", ...props }) => (
+  <DialogPrimitive.Description
+    className={cn("text-sm text-gray-500", className)}
+    {...props}
+  />
+);
