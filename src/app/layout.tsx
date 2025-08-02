@@ -13,6 +13,9 @@ const noto = Noto_Sans_KR({
 export const metadata = {
   title: "coufit",
   description: "coufit ",
+  icons: {
+    icon: "/icon/coufit.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
