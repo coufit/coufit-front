@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { List, ArrowLeft, Search } from "lucide-react";
-import KakaoMap from "../components/stores/KakaoMap";
-import StoreList from "../components/StoreList";
-import StoreFindSideBar from "../components/stores/StoreFindSideBar";
+import KakaoMap from "@/components/storeFind/KakaoMap";
+import StoreList from "@/components/storeFind/StoreList";
+import StoreFindSideBar from "@/components/storeFind/StoreFindSideBar";
+import StoreDetailModal from "@/components/storeFind/StoreDetailModal";
 
 interface Store {
   storeId: number;
@@ -12,6 +13,11 @@ interface Store {
   latitude: number;
   longitude: number;
   category: string;
+  isOpen: boolean;
+  address: string;
+  distance: string;
+  hours: string;
+  phone: string;
 }
 
 export default function StoreFind() {
@@ -22,6 +28,11 @@ export default function StoreFind() {
       latitude: 37.5665,
       longitude: 126.978,
       category: "카페",
+      isOpen: true,
+      address: "어쩌구 저쩌구",
+      distance: "100m",
+      hours: "09:00-22:00",
+      phone: "031-1234-5678",
     },
     {
       storeId: 2,
@@ -29,6 +40,11 @@ export default function StoreFind() {
       latitude: 37.568,
       longitude: 126.98,
       category: "한식",
+      isOpen: false,
+      address: "어쩌구 저쩌구",
+      distance: "100m",
+      hours: "09:00-22:00",
+      phone: "031-1234-5678",
     },
   ];
 
@@ -39,6 +55,7 @@ export default function StoreFind() {
 
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
   const [isStoreListOverlayOpen, setIsStoreListOverlayOpen] = useState(false);
+  const [selectedStoreId, setSelectedStoreId] = useState<number | null>(null);
 
   const toggleSidebar = () => {
     setIsSideBarOpen((prev) => !prev);
@@ -47,6 +64,18 @@ export default function StoreFind() {
   const toggleStoreListOverlay = () => {
     setIsStoreListOverlayOpen((prev) => !prev);
   };
+
+  const handleModalOpen = (storeId: number) => {
+    console.log("선택된 storeId:", storeId);
+    setSelectedStoreId(storeId);
+  };
+
+  const handleModalClose = () => {
+    setSelectedStoreId(null);
+  };
+
+  const selectedStore =
+    dummyStores.find((store) => store.storeId === selectedStoreId) || null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -98,10 +127,17 @@ export default function StoreFind() {
       </div>
       {isStoreListOverlayOpen && (
         <StoreList
+          stores={dummyStores}
+          onOpenDetail={handleModalOpen}
           isOpen={isStoreListOverlayOpen}
           onClose={toggleStoreListOverlay}
         />
       )}
+      <StoreDetailModal
+        isOpen={!!selectedStore}
+        onClose={handleModalClose}
+        store={selectedStore}
+      />
     </div>
   );
 }

@@ -1,9 +1,5 @@
 import { X, MapPin } from "lucide-react";
-
-interface StoreListProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
+import { useState, useEffect } from "react";
 
 interface Store {
   storeId: number;
@@ -14,48 +10,55 @@ interface Store {
   isOpen: boolean;
   address: string;
   distance: string;
+  hours: string;
+  phone: string;
 }
 
-export default function StoreList({ isOpen, onClose }: StoreListProps) {
-  const dummyStores: Store[] = [
-    {
-      storeId: 1,
-      name: "멋진 카페",
-      latitude: 37.5665,
-      longitude: 126.978,
-      category: "카페",
-      isOpen: true,
-      address: "어쩌구 저쩌구",
-      distance: "250m",
-    },
-    {
-      storeId: 2,
-      name: "맛있는 식당",
-      latitude: 37.568,
-      longitude: 126.98,
-      category: "한식",
-      isOpen: false,
-      address: "어쩌구 저쩌구",
-      distance: "200m",
-    },
-  ];
+interface StoreListProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onOpenDetail: (storeId: number) => void;
+  stores: Store[];
+}
+
+export default function StoreList({
+  isOpen,
+  onClose,
+  onOpenDetail,
+  stores,
+}: StoreListProps) {
+  const [shouldRender, setShouldRender] = useState(isOpen);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (isOpen) {
+      setShouldRender(true);
+    } else {
+      timeoutId = setTimeout(() => {
+        setShouldRender(false);
+      }, 300);
+    }
+    return () => clearTimeout(timeoutId);
+  }, [isOpen]);
+
+  if (!shouldRender) {
+    return null;
+  }
+
   return (
     <>
-      {isOpen && <div className="fixed inset- z-40" onClick={onClose}></div>}
       <div
         className={`fixed top-4 right-4 w-96 max-h-[calc(100vh-64px)] bg-white rounded-2xl shadow-2xl overflow-hidden z-40
           transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "translate-x-full"}`}
-        style={{ top: "80px" }}
+        style={{ top: "150px" }}
       >
         <div className="p-4 border-b bg-white sticky top-0">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-gray-900">가맹점 목록</h3>
             <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500">
-                {dummyStores.length}개
-              </span>
-              <button>
+              <span className="text-sm text-gray-500">{stores.length}개</span>
+              <button onClick={onClose}>
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -63,7 +66,7 @@ export default function StoreList({ isOpen, onClose }: StoreListProps) {
         </div>
         <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
           <div className="p-4 space-y-3">
-            {dummyStores.map((store) => (
+            {stores.map((store) => (
               <div
                 key={store.storeId}
                 className="hover:shadow-md transition-shadow cursor-pointer border-0 shadow-sm"
@@ -94,7 +97,10 @@ export default function StoreList({ isOpen, onClose }: StoreListProps) {
                         </div>
                       </div>
                     </div>
-                    <button className="flex flex-row px-3 py-2 gap-2 border-solid border border-gray-300 text-black rounded-[6.25px] items-center justify-center">
+                    <button
+                      onClick={() => onOpenDetail(store.storeId)}
+                      className="flex flex-row px-3 py-2 gap-2 border-solid border border-gray-300 text-black rounded-[6.25px] items-center justify-center"
+                    >
                       상세
                     </button>
                   </div>
