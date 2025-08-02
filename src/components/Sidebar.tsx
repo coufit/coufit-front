@@ -4,7 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { X, User, CreditCard, MapPin, Star } from "lucide-react";
-import AICustomModal from "@/components/AicustomModal";
+import AICustomModal from "@/components/AICustomModal";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -25,12 +25,12 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <div
-      className={`fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
+      className={`fixed inset-y-0 left-0 z-[80] w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       }`}
     >
       <div className="flex flex-col h-full">
-        {/* Header */}
+        {/* Sidebar Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-100">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -106,7 +106,10 @@ const Sidebar: React.FC<SidebarProps> = ({
             <Button
               variant="ghost"
               className="w-full h-12 justify-start rounded-xl hover:bg-gray-50 transition-colors group px-0"
-              onClick={() => setCurrentPage("store-finder")}
+              onClick={() => {
+                setSidebarOpen(false);
+                setCurrentPage("store-finder");
+              }}
             >
               <div className="w-8 h-8 bg-orange-50 rounded-xl flex items-center justify-center mr-3 group-hover:bg-orange-100 transition-colors">
                 <MapPin className="w-4 h-4 text-orange-600" />
