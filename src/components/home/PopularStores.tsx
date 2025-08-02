@@ -1,51 +1,95 @@
 "use client";
-import React from "react";
+
+import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Star, Store } from "lucide-react";
 
 interface StoreItem {
-  name: string;
+  storeName: string;
   category: string;
-  rating: number;
-  distance: string;
+  distance: number; // API에서 숫자로 받음 (미터)
   discount: string;
+  imageUrl: string;
 }
 
-const stores: StoreItem[] = [
-  {
-    name: "맛있는 김밥천국",
-    category: "한식",
-    rating: 4.8,
-    distance: "120m",
-    discount: "10%",
-  },
-  {
-    name: "프레시 마트",
-    category: "마트",
-    rating: 4.6,
-    distance: "250m",
-    discount: "5%",
-  },
-  {
-    name: "카페 로스팅",
-    category: "카페",
-    rating: 4.9,
-    distance: "180m",
-    discount: "15%",
-  },
-  {
-    name: "헤어샵 스타일",
-    category: "미용",
-    rating: 4.7,
-    distance: "300m",
-    discount: "20%",
-  },
-];
+// 거리(m) → m 또는 km 단위로 포맷팅하는 헬퍼
+function formatDistance(distance: number): string {
+  if (distance >= 1000) {
+    const km = distance / 1000;
+    const rounded = Math.round(km * 10) / 10;
+    return `${rounded.toLocaleString()}km`;
+  }
+  return `${distance.toLocaleString()}m`;
+}
 
-export const PopularStores: React.FC = () => {
+const PopularStores: React.FC = () => {
+  // ① 빈 배열로 초기화해야 map 호출 시 에러가 나지 않습니다.
+  const [stores, setStores] = useState<StoreItem[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>("");
+
+  useEffect(() => {
+    async function fetchStores() {
+      setLoading(true);
+      setError("");
+
+      // ② 하드코딩된 위도·경도
+      const lat = 37.1234;
+      const lon = 127.5678;
+
+      // ③ 토큰이 필요하면 꺼내서 헤더에 추가
+      const token = localStorage.getItem("authToken");
+      const email = localStorage.getItem("userEmail");
+
+      try {
+        const res = await fetch(
+          `http://localhost:8080/api/home/popular-stores?lat=${lat}&lon=${lon}`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              ...(email ? { Authorization: `Bearer ${email}` } : {}),
+            },
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error(`Error ${res.status}: ${res.statusText}`);
+        }
+
+        const json = await res.json();
+        // API 스펙이 { message, data: StoreItem[] } 일 때:
+        setStores(Array.isArray(json.data) ? json.data : []);
+      } catch (err: any) {
+        console.error(err);
+        setError(err.message || "데이터를 불러오는 중 오류가 발생했습니다.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchStores();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-20">
+        <div className="text-center">로딩 중...</div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="py-20">
+        <div className="text-center text-red-600">{error}</div>
+      </section>
+    );
+  }
+
   return (
-    <section className="py-20 ">
+    <section className="py-20">
       <div className="container mx-auto max-w-[1280px] px-4">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">인기 가맹점</h2>
@@ -60,21 +104,28 @@ export const PopularStores: React.FC = () => {
               className="hover:shadow-lg transition-shadow cursor-pointer"
             >
               <CardContent className="p-4">
-                <div className="w-full h-32 bg-gradient-to-br from-emerald-100 to-blue-100 rounded-lg mb-4 flex items-center justify-center">
-                  <Store className="w-12 h-12 text-emerald-600" />
+                {/* 이미지 */}
+                <div className="w-full h-32 overflow-hidden rounded-lg mb-4">
+                  <img
+                    src={store.imageUrl}
+                    alt={store.storeName}
+                    className="object-cover w-full h-full"
+                  />
                 </div>
-                <h3 className="font-bold text-lg mb-2">{store.name}</h3>
+
+                <h3 className="font-bold text-lg mb-2">{store.storeName}</h3>
+
+                {/* 카테고리 + 할인 */}
                 <div className="flex items-center justify-between mb-2">
                   <Badge variant="secondary">{store.category}</Badge>
-                  {/* <div className="flex items-center">
-                    <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                    <span className="text-sm text-gray-600 ml-1">
-                      {store.rating}
-                    </span>
-                  </div> */}
+                  <Badge className="bg-emerald-100 text-emerald-800">
+                    {store.discount}
+                  </Badge>
                 </div>
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <span>{store.distance}</span>
+
+                {/* 거리: m 또는 km */}
+                <div className="text-sm text-gray-600">
+                  거리: {formatDistance(store.distance)}
                 </div>
               </CardContent>
             </Card>

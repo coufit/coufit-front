@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import {
   Dialog,
   DialogContent,
@@ -13,12 +14,38 @@ import { Input } from "@/components/ui/input";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
+interface BalanceResponse {
+  code: number;
+  message: string;
+  data: {
+    pointBalance: number;
+    expireAmount: number;
+    expireInDays: number;
+  };
+}
+
+interface ChargeResponse {
+  code: number;
+  message: string;
+  data: {
+    userId: string;
+    amount: number;
+    pointBalance: number;
+    chargedAt: string;
+  };
+}
+
 export interface ChargeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
 export default function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
+  //   const router = useRouter();
+
+  const [balance, setBalance] = React.useState<number>(0);
+  const [loadingBalance, setLoadingBalance] = React.useState<boolean>(true);
+
   const [chargeAmount, setChargeAmount] = React.useState<string>("");
   const [paymentMethod, setPaymentMethod] =
     React.useState<string>("CREDIT_CARD");
@@ -28,49 +55,62 @@ export default function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
     () => [
       { id: "CREDIT_CARD", name: "신용카드", icon: <>💳</> },
       { id: "BANK_TRANSFER", name: "계좌이체", icon: <>🏦</> },
-      { id: "KAKAO_PAY", name: "카카오페이", icon: <>💛</> },
-      { id: "NAVER_PAY", name: "네이버페이", icon: <>💚</> },
+      { id: "PAYPAL", name: "PayPal", icon: <>🌐</> },
     ],
     []
   );
 
+  // 모달 열릴 때마다 잔액 조회
+  React.useEffect(() => {
+    if (!open) return;
+    setLoadingBalance(true);
+    const token = localStorage.getItem("authToken");
+    fetch(`${API_BASE}/api/points/balance`, {
+      headers: {
+        "Content-Type": "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+    })
+      .then((res) => res.json())
+      .then((json: BalanceResponse) => {
+        if (json.code === 200) setBalance(json.data.pointBalance);
+      })
+      .catch(console.error)
+      .finally(() => setLoadingBalance(false));
+  }, [open]);
+
   const handleCharge = async () => {
-    if (!chargeAmount || Number(chargeAmount) <= 0) {
+    const amountNum = Number(chargeAmount);
+    if (!amountNum || amountNum <= 0) {
       alert("충전할 금액을 입력해 주세요.");
       return;
     }
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/charge`, {
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(`${API_BASE}/api/points/charge`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: Number(chargeAmount),
-          paymentMethod,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify({ amount: amountNum, paymentMethod }),
       });
-      const json = await res.json();
+      const json: ChargeResponse = await res.json();
       if (!res.ok || json.code !== 200) {
-        throw new Error(json.message ?? res.statusText);
+        throw new Error(json.message || res.statusText);
       }
 
-      const data = json.data as {
-        userId: number;
-        amount: number;
-        pointBalance: number;
-        chargedAt: string;
-      };
-
       alert(
-        `충전 완료!\n충전액: ${data.amount.toLocaleString()}원\n` +
-          `잔액: ${data.pointBalance.toLocaleString()}원`
+        `충전 완료!\n` +
+          `충전액: ${json.data.amount.toLocaleString()}원\n` +
+          `잔액: ${json.data.pointBalance.toLocaleString()}원`
       );
-      onOpenChange(false);
-      // TODO: 필요하면 부모에 잔액 갱신 콜백 호출
-    } catch (error: unknown) {
-      const msg = error instanceof Error ? error.message : "알 수 없는 오류";
-      alert("충전에 실패했습니다: " + msg);
+      window.location.href = "/wallet";
+    } catch (err: any) {
+      console.error(err);
+      alert("충전에 실패했습니다: " + (err.message || "알 수 없는 오류"));
     } finally {
       setIsLoading(false);
     }
@@ -84,17 +124,17 @@ export default function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
             민생쿠폰 충전하기
           </DialogTitle>
         </DialogHeader>
-
         <div className="space-y-6 mt-4">
-          {/* 현재 잔액 (prop 혹은 상위 상태로 대체 가능) */}
+          {/* 현재 잔액 */}
           <div className="bg-emerald-50 p-4 rounded-lg text-center">
             <div className="text-sm text-emerald-600 font-medium">
-              현재 잔액
+              {loadingBalance ? "불러오는 중…" : "현재 잔액"}
             </div>
-            <div className="text-2xl font-bold text-emerald-700">125,000원</div>
+            <div className="text-2xl font-bold text-emerald-700">
+              {loadingBalance ? "--원" : `${balance.toLocaleString()}원`}
+            </div>
           </div>
-
-          {/* 충전 금액 선택 */}
+          {/* 이하 동일 */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-gray-700">
               충전 금액
@@ -106,7 +146,7 @@ export default function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
                   <Button
                     key={str}
                     variant={chargeAmount === str ? "default" : "ghost"}
-                    className="h-12 border border-gray-200"
+                    className="h-12 border"
                     onClick={() => setChargeAmount(str)}
                   >
                     {amt.toLocaleString()}원
@@ -122,8 +162,6 @@ export default function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
               className="w-full"
             />
           </div>
-
-          {/* 결제 수단 선택 */}
           <div className="space-y-3">
             <label className="text-sm font-medium text-gray-700">
               결제 수단
@@ -142,12 +180,10 @@ export default function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
               ))}
             </div>
           </div>
-
-          {/* 액션 버튼 */}
           <div className="flex space-x-3">
             <Button
               variant="ghost"
-              className="flex-1 bg-transparent"
+              className="flex-1"
               onClick={() => onOpenChange(false)}
               disabled={isLoading}
             >
@@ -158,13 +194,7 @@ export default function ChargeModal({ open, onOpenChange }: ChargeModalProps) {
               onClick={handleCharge}
               disabled={isLoading}
             >
-              {isLoading
-                ? "충전 중..."
-                : `${
-                    chargeAmount
-                      ? `${Number(chargeAmount).toLocaleString()}원 `
-                      : ""
-                  }충전하기`}
+              {isLoading ? "충전 중…" : "충전하기"}
             </Button>
           </div>
         </div>

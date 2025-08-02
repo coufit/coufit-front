@@ -1,20 +1,18 @@
 "use client";
 
 import "./globals.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Noto_Sans_KR, Inter } from "next/font/google";
+
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import LoginModal from "@/components/LoginModal";
-import { Noto_Sans_KR, Inter } from "next/font/google";
 
-// 1) 폰트 불러오기 (한글용 Noto Sans KR엔 반드시 'korean'을 포함)
 const noto = Noto_Sans_KR({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   subsets: ["latin"],
   display: "swap",
 });
-
-// 영어 보조 폰트 Inter
 const inter = Inter({
   weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   subsets: ["latin"],
@@ -31,8 +29,35 @@ export default function RootLayout({
   const [aiModalOpen, setAiModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState("spending");
 
+  // 로그인 사용자 정보
+  const [user, setUser] = useState<{ email: string } | null>(null);
+  // 마운트 완료 플래그 (SSR vs CSR 차단)
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    // ① 클라이언트 마운트 시점에만 실행
+    setMounted(true);
+
+    // ② 로컬스토리지에서 이메일 읽어서 user 세팅
+    const email = localStorage.getItem("userEmail");
+    const token = localStorage.getItem("authToken");
+    if (token && email) {
+      setUser({ email });
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("authToken");
+    localStorage.removeItem("userEmail");
+    setUser(null);
+  };
+
+  // 마운트 전까지 아무것도 렌더하지 않아 깜빡임 방지
+  if (!mounted) {
+    return null;
+  }
+
   return (
-    // 2) html/body에 font.className 적용
     <html lang="ko" className={noto.className}>
       <body
         className={`${inter.className} min-h-screen bg-gradient-to-br from-emerald-50 via-white to-blue-50`}
@@ -40,8 +65,11 @@ export default function RootLayout({
         <Header
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
-          setLoginModalOpen={setLoginModalOpen}
+          user={user}
+          onLogout={handleLogout}
+          onLoginClick={() => setLoginModalOpen(true)}
         />
+
         <Sidebar
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
@@ -49,11 +77,17 @@ export default function RootLayout({
           setAiModalOpen={setAiModalOpen}
           setCurrentPage={setCurrentPage}
         />
+
         <LoginModal
-          loginModalOpen={loginModalOpen}
-          setloginModalOpen={setLoginModalOpen}
+          open={loginModalOpen}
+          onClose={() => setLoginModalOpen(false)}
+          onLoginSuccess={(userData) => {
+            setUser(userData);
+            setLoginModalOpen(false);
+          }}
         />
-        <main> {children} </main>
+
+        <main>{children}</main>
       </body>
     </html>
   );

@@ -4,7 +4,7 @@ import React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { X, User, CreditCard, MapPin, Star } from "lucide-react";
-import AICustomModal from "@/components/AICustomModal";
+import AICustomModal from "@/components/AicustomModal";
 
 interface SidebarProps {
   sidebarOpen: boolean;

@@ -11,10 +11,18 @@ export const DialogContent: React.FC<
   React.ComponentProps<typeof DialogPrimitive.Content>
 > = ({ className = "", children, ...props }) => (
   <DialogPrimitive.Portal>
-    <DialogPrimitive.Overlay className="fixed inset-0 bg-black/40 z-[60]" />
+    {/* 1) Overlay를 투명하게 바꾸거나 숨깁니다 */}
+    <DialogPrimitive.Overlay
+      className={cn(
+        "fixed inset-0 bg-transparent" // 완전 투명
+        // "fixed inset-0 bg-black/20", // 살짝 어둡게 하려면 이렇게
+      )}
+    />
+
+    {/* 2) Content에 z-index를 높여 Overlay 뒤로 */}
     <DialogPrimitive.Content
       className={cn(
-        "fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-lg",
+        "fixed top-1/2 left-1/2 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 rounded-xl bg-white p-6 shadow-lg z-50",
         className
       )}
       {...props}
