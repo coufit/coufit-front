@@ -4,6 +4,7 @@ import "./globals.css";
 import React, { useState } from "react";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
+import LoginModal from "@/components/LoginModal";
 import { Noto_Sans_KR, Inter } from "next/font/google";
 
 // 1) 폰트 불러오기 (한글용 Noto Sans KR엔 반드시 'korean'을 포함)
@@ -47,6 +48,10 @@ export default function RootLayout({
           aiModalOpen={aiModalOpen}
           setAiModalOpen={setAiModalOpen}
           setCurrentPage={setCurrentPage}
+        />
+        <LoginModal
+          loginModalOpen={loginModalOpen}
+          setloginModalOpen={setLoginModalOpen}
         />
         <main> {children} </main>
       </body>

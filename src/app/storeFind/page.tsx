@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { List, ArrowLeft, Search } from "lucide-react";
 import KakaoMap from "@/components/storeFind/KakaoMap";
-import StoreList from "../../components/storeFind/StoreList";
-import StoreFindSideBar from "../../components/storeFind/StoreFindSideBar";
-import StoreDetailModal from "../../components/storeFind/StoreDetailModal";
+import StoreList from "@/components/storeFind/StoreList";
+import StoreFindSideBar from "@/components/storeFind/StoreFindSideBar";
+import StoreDetailModal from "@/components/storeFind/StoreDetailModal";
 
 interface Store {
   storeId: number;
@@ -30,9 +30,9 @@ export default function StoreFind() {
       category: "카페",
       isOpen: true,
       address: "어쩌구 저쩌구",
-      distance: "250m",
-      hours: "09:00 - 22:00",
-      phone: "031-123-4567",
+      distance: "100m",
+      hours: "09:00-22:00",
+      phone: "031-1234-5678",
     },
     {
       storeId: 2,
@@ -42,9 +42,9 @@ export default function StoreFind() {
       category: "한식",
       isOpen: false,
       address: "어쩌구 저쩌구",
-      distance: "200m",
-      hours: "09:00 - 22:00",
-      phone: "031-123-4567",
+      distance: "100m",
+      hours: "09:00-22:00",
+      phone: "031-1234-5678",
     },
   ];
 
@@ -66,6 +66,7 @@ export default function StoreFind() {
   };
 
   const handleModalOpen = (storeId: number) => {
+    console.log("선택된 storeId:", storeId);
     setSelectedStoreId(storeId);
   };
 
@@ -133,7 +134,7 @@ export default function StoreFind() {
         />
       )}
       <StoreDetailModal
-        isOpen={!!selectedStoreId}
+        isOpen={!!selectedStore}
         onClose={handleModalClose}
         store={selectedStore}
       />

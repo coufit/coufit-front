@@ -8,9 +8,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, Share2, MapPin, Phone, Navigation } from "lucide-react";
+import { Clock, MapPin, Phone } from "lucide-react";
 
 interface Store {
   storeId: number;
@@ -51,15 +50,10 @@ export default function StoreDetailModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md z-[100]">
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>{store?.name}</span>
-            <div className="flex items-center space-x-2">
-              <Button variant="ghost" size="sm">
-                <Share2 className="w-4 h-4" />
-              </Button>
-            </div>
           </DialogTitle>
           <DialogDescription className="sr-only">
             {store.name}의 상세 정보 모달입니다.
@@ -120,16 +114,6 @@ export default function StoreDetailModal({
             </div>
 
             {/* 액션 버튼 */}
-            <div className="flex space-x-3">
-              <Button className="flex-1 bg-emerald-600 hover:bg-emerald-700">
-                <Navigation className="w-4 h-4 mr-2" />
-                길찾기
-              </Button>
-              <Button className="flex-1 bg-transparent">
-                <Phone className="w-4 h-4 mr-2" />
-                전화하기
-              </Button>
-            </div>
           </div>
         )}
       </DialogContent>

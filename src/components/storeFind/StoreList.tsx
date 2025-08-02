@@ -47,9 +47,6 @@ export default function StoreList({
 
   return (
     <>
-      {isOpen && (
-        <div className="fixed inset-0 bg-black/50 z-40" onClick={onClose}></div>
-      )}
       <div
         className={`fixed top-4 right-4 w-96 max-h-[calc(100vh-64px)] bg-white rounded-2xl shadow-2xl overflow-hidden z-40
           transition-transform duration-300 ease-in-out
