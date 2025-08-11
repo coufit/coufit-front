@@ -133,7 +133,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               <Button
                 variant="ghost"
                 className="w-full h-12 justify-start rounded-xl hover:bg-gray-50 transition-colors group"
-                onClick={() => setCurrentPage("spending")}
+                onClick={() => setCurrentPage("wallet")}
               >
                 <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center mr-3 group-hover:bg-blue-100 transition-colors">
                   <CreditCard className="w-4 h-4 text-blue-600" />

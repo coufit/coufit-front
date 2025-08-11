@@ -31,7 +31,7 @@ export default function StoreFindSideBar({
           className={`h-full bg-white shadow-xl transform transition-all duration-300 ease-in-out overflow-hidden z-20
             ${isOpen ? "w-80" : "w-0"}`}
         >
-          <div className="px-4 py-6 space-y-6 h-full overflow-y-auto">
+          <div className="px-6 py-6 space-y-6 h-full overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-gray-900">필터</h3>
               <button>
@@ -55,13 +55,17 @@ export default function StoreFindSideBar({
               <h3 className="font-semibold text-gray-900">지역 선택</h3>
               <div className="grid grid-cols-1 gap-2">
                 <div className="relative">
-                  <select className="w-full p-2 rounded-md border appearance-none border-gray-300 pr-10"></select>
+                  <select className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10">
+                    <option>경기도</option>
+                  </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                     <ChevronDown className="h-4 w-4" />
                   </div>
                 </div>
                 <div className="relative">
-                  <select className="w-full p-2 rounded-md border appearance-none border-gray-300 pr-10"></select>
+                  <select className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10">
+                    <option>시흥시</option>
+                  </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                     <ChevronDown className="h-4 w-4" />
                   </div>
@@ -70,9 +74,9 @@ export default function StoreFindSideBar({
             </div>
 
             {/* 업종 선택 */}
-            <div className="space-y-3">
+            <div className=" space-y-3">
               <h3 className="font-semibold text-gray-900">업종 선택</h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {categories.map((category) => (
                   <div key={category.id} className="flex items-center gap-2">
                     <input
@@ -82,7 +86,7 @@ export default function StoreFindSideBar({
                     />
                     <label
                       htmlFor={category.name}
-                      className="flex items-center space-x-2 cursor-pointer flex-1"
+                      className="flex text-black items-center space-x-2 cursor-pointer flex-1"
                     >
                       <span>{category.icon}</span>
                       <span className="text-sm">{category.name}</span>
@@ -96,7 +100,7 @@ export default function StoreFindSideBar({
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-900">정렬</h3>
               <div className="relative">
-                <select className="w-full p-2 rounded-md border appearance-none border-gray-300 pr-10">
+                <select className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10">
                   <option>추천순</option>
                   <option>거리순</option>
                 </select>
