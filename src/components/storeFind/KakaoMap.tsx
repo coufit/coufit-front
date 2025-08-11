@@ -8,6 +8,7 @@ import {
   MapMarker,
   useKakaoLoader,
   MapInfoWindow,
+  CustomOverlayMap,
 } from "react-kakao-maps-sdk";
 
 import { useState, useEffect } from "react";
@@ -65,21 +66,24 @@ export default function KakaoMap({
     <div className="h-[calc(100vh-64px)] relative">
       <Map center={center} className="w-full h-full" level={4}>
         {stores.map((store) => (
-          <MapMarker
+          <CustomOverlayMap
             key={store.storeId}
             position={{ lat: store.latitude, lng: store.longitude }}
-            clickable={true}
-            onClick={() => handleMarkerClick(store)}
-            onMouseOver={() => setHoverStoreId(store.storeId)}
-            onMouseOut={() => setHoverStoreId(null)}
+            yAnchor={1}
           >
-            <div className="w-8 h-8 bg-emerald-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
+            <div
+              onClick={() => handleMarkerClick(store)}
+              className="w-8 h-8 bg-emerald-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform"
+            >
               <StoreIcon className="w-4 h-4 text-white" />
             </div>
 
             {hoveredStoreId === store.storeId && (
               <MapInfoWindow
-                position={{ lat: store.latitude, lng: store.longitude }}
+                position={{
+                  lat: store.latitude,
+                  lng: store.longitude,
+                }}
                 disableAutoPan={true}
                 removable={false}
               >
@@ -89,7 +93,7 @@ export default function KakaoMap({
                 </div>
               </MapInfoWindow>
             )}
-          </MapMarker>
+          </CustomOverlayMap>
         ))}
 
         {currentLocation && (
@@ -99,9 +103,7 @@ export default function KakaoMap({
               lng: currentLocation.longitude,
             }}
             clickable={false}
-          >
-            <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
-          </MapMarker>
+          ></MapMarker>
         )}
       </Map>
     </div>

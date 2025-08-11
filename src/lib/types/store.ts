@@ -12,4 +12,5 @@ export interface Store {
   closeTime: string;
   phoneNumber: string;
   imageUrl: string | null;
+  icon?: string;
 }

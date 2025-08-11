@@ -40,7 +40,10 @@ export default function StoreDetailModal({
       <DialogContent className="max-w-md z-[100]">
         <DialogHeader>
           <DialogTitle className="text-black flex items-center justify-between">
-            <span>{store?.name}</span>
+            <span className="flex flex-row gap-2 items-center">
+              {store?.name}
+              <div className="text-emerald-600 text-sm">{store.distance}m</div>
+            </span>
           </DialogTitle>
         </DialogHeader>
 
@@ -74,11 +77,10 @@ export default function StoreDetailModal({
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
-                  <div className="font-medium text-black">주소</div>
-                  <div className="text-gray-600 text-sm">{store.address}</div>
-                  <div className="text-emerald-600 text-sm">
-                    {store.distance}
+                  <div className="font-medium text-black flex flex-row gap-2 items-center">
+                    주소
                   </div>
+                  <div className="text-gray-600 text-sm">{store.address}</div>
                 </div>
               </div>
 
@@ -87,7 +89,7 @@ export default function StoreDetailModal({
                 <div>
                   <div className="font-medium text-black">영업시간</div>
                   <div className="text-gray-600 text-sm">
-                    {store.openTime} - {store.closeTime}
+                    {store.openTime.slice(0, 5)} - {store.closeTime.slice(0, 5)}
                   </div>
                 </div>
               </div>

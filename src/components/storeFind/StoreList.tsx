@@ -82,7 +82,7 @@ export default function StoreList({
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500">
-                            {store.distance}
+                            {store.distance}m
                           </span>
                         </div>
                       </div>
