@@ -7,11 +7,13 @@ import StoreList from "@/components/storeFind/StoreList";
 import StoreFindSideBar from "@/components/storeFind/StoreFindSideBar";
 import { Store } from "@/lib/types/store";
 import StoreDetailModal from "@/components/storeFind/StoreDetailModal";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function StoreFind() {
   const router = useRouter();
+  const searchParamsFromUrl = useSearchParams();
 
+  // 사용자 현재 위치 (가정)
   const userCurrentLocation = {
     latitude: 37.5007861,
     longitude: 127.0368861,
@@ -22,6 +24,88 @@ export default function StoreFind() {
   const [isStoreListOverlayOpen, setIsStoreListOverlayOpen] = useState(false);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // 검색 파라미터 상태
+  const [searchParams, setSearchParams] = useState({
+    keyword: "",
+    region: "",
+    area: "",
+    category: "",
+    isOpenNow: false,
+    sort: "popularity",
+  });
+
+  // ⭐️ 두 개의 useEffect를 하나로 통합하여 무한 호출 방지
+  useEffect(() => {
+    // URL 쿼리 파라미터에서 초기 키워드를 가져와 searchParams 상태를 초기화
+    // 이 로직은 searchParamsFromUrl이 변경될 때만 실행됩니다.
+    const keywordFromUrl = searchParamsFromUrl.get("keyword");
+    if (keywordFromUrl) {
+      setSearchParams((prev) => ({ ...prev, keyword: keywordFromUrl }));
+    }
+
+    // API 호출 함수
+    const fetchStores = async () => {
+      const token = localStorage.getItem("authToken");
+
+      if (!token) {
+        console.warn("API 호출 실패: 인증 토큰이 없습니다.");
+        setStores([]);
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams();
+        if (searchParams.keyword) {
+          params.append("keyword", searchParams.keyword);
+        }
+        if (searchParams.region) {
+          params.append("region", searchParams.region);
+        }
+        if (searchParams.area) {
+          params.append("area", searchParams.area);
+        }
+        if (searchParams.category) {
+          params.append("category", searchParams.category);
+        }
+        if (searchParams.isOpenNow) {
+          params.append("isOpenNow", "true");
+        }
+        if (searchParams.sort) {
+          params.append("sort", searchParams.sort);
+        }
+        params.append("latitude", userCurrentLocation.latitude.toString());
+        params.append("longitude", userCurrentLocation.longitude.toString());
+
+        const api = `${
+          process.env.NEXT_PUBLIC_API_BASE_URL
+        }/api/stores/search?${params.toString()}`;
+
+        const res = await fetch(api, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error("네트워크 에러");
+        }
+        const data = await res.json();
+
+        if (data.code === 200) {
+          setStores(data.data.storeList);
+        } else {
+          console.error("API 응답 오류:", data.message);
+          setStores([]);
+        }
+      } catch (error) {
+        console.error("API 호출 오류:", error);
+        setStores([]);
+      }
+    };
+
+    fetchStores();
+  }, [searchParams, userCurrentLocation, searchParamsFromUrl]); // ⭐️ 종속성 배열을 하나로 통합
 
   const toggleSidebar = () => {
     setIsSideBarOpen((prev) => !prev);
@@ -44,67 +128,6 @@ export default function StoreFind() {
     setIsDetailModalOpen(false);
     setSelectedStore(null);
   };
-
-  useEffect(() => {
-    async function fetchNearbyStores() {
-      try {
-        const api = `http://localhost:8080/api/stores/nearby?latitude=${userCurrentLocation.latitude}&longitude=${userCurrentLocation.longitude}&radius=3000`;
-        console.log("api url : ", api);
-        const token = localStorage.getItem("authToken");
-        const response = await fetch(api, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        const data = await response.json();
-        console.log("api 응답 : ", data);
-
-        if (data.code === 200) {
-          const mappedStores: Store[] = data.data.map((item: Store) => ({
-            storeId: item.storeId,
-            name: item.name,
-            latitude: item.latitude,
-            longitude: item.longitude,
-            categoryName: item.categoryName,
-            isOpenNow: item.isOpenNow,
-            address: item.address,
-            distance: item.distance, // API에서 제공하는 거리 (미터)
-            openTime: item.openTime,
-            closeTime: item.closeTime,
-            phoneNumber: item.phoneNumber,
-            imageUrl: item.imageUrl,
-          }));
-          console.log("매핑된 가맹점:", mappedStores);
-          setStores(mappedStores);
-        } else {
-          console.error("API 응답 오류:", data.message);
-          setStores([]);
-        }
-      } catch (error) {
-        console.error("API 호출 오류:", error);
-        // 더미 데이터 fallback
-        const dummyStores: Store[] = [
-          {
-            storeId: 1,
-            name: "멋진 카페",
-            latitude: 37.512453,
-            longitude: 127.01890122222221,
-            categoryName: "카페",
-            isOpenNow: true,
-            address: "서울특별시 강남구 테헤란로 123",
-            distance: 0,
-            openTime: "09:00:00",
-            closeTime: "21:00:00",
-            phoneNumber: "02-1234-5678",
-            imageUrl: null,
-          },
-        ];
-        setStores(dummyStores);
-      }
-    }
-
-    fetchNearbyStores();
-  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -146,12 +169,14 @@ export default function StoreFind() {
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden relative">
-        <StoreFindSideBar isOpen={isSideBarOpen} onClose={toggleSidebar} />
+        <StoreFindSideBar
+          isOpen={isSideBarOpen}
+          onClose={toggleSidebar}
+          searchParams={searchParams}
+          setSearchParams={setSearchParams}
+        />
         <div className={`flex-1 transition-all duration-300 ease-in-out`}>
-          <KakaoMap
-            initialStores={stores}
-            currentLocation={userCurrentLocation}
-          />
+          <KakaoMap stores={stores} currentLocation={userCurrentLocation} />
         </div>
       </div>
       {isStoreListOverlayOpen && (
@@ -160,6 +185,8 @@ export default function StoreFind() {
           onClose={toggleStoreListOverlay}
           onOpenDetail={handleOpenDetail}
           stores={stores}
+          searchParams={searchParams}
+          setSearchParams={setSearchParams}
         />
       )}
       <StoreDetailModal

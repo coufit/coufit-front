@@ -1,13 +1,20 @@
+"use client";
+import { useState, useEffect } from "react";
 import { Search, ChevronDown, X } from "lucide-react";
+import { Region } from "@/lib/types/region";
 
 interface StoreFindSideBarProps {
   isOpen: boolean;
   onClose: () => void;
+  searchParams: any;
+  setSearchParams: (params: any) => void;
 }
 
 export default function StoreFindSideBar({
   isOpen,
   onClose,
+  searchParams,
+  setSearchParams,
 }: StoreFindSideBarProps) {
   const categories = [
     { id: 1, name: "음식점", icon: "🍽️" },
@@ -21,6 +28,75 @@ export default function StoreFindSideBar({
     { id: 9, name: "숙박", icon: "🏘️" },
     { id: 10, name: "잡화", icon: "🛍️" },
   ];
+
+  const [regions, setRegions] = useState<Region[]>([]);
+  const [parentRegions, setParentRegions] = useState<Region[]>([]);
+  const [childRegions, setChileRegions] = useState<Region[]>([]);
+  const [selectedParentId, setSelectedParentId] = useState<number | null>(null);
+
+  const fetchRegions = async () => {
+    try {
+      const api = `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/regions/categories`;
+      const token = localStorage.getItem("authToken");
+      const res = await fetch(api, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error("네트워크 에러");
+      }
+      const result = await res.json();
+      const allRegions: Region[] = result.data;
+
+      setRegions(allRegions);
+
+      const parents = allRegions.filter((region) => region.parentId === null);
+      setParentRegions(parents);
+    } catch (error) {
+      console.error("지역 카테고리 불러오기 실패: ", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchRegions();
+  }, []);
+
+  useEffect(() => {
+    if (selectedParentId) {
+      const selectParent = regions.find(
+        (region) => region.id === selectedParentId
+      );
+      if (selectParent) {
+        const children = regions.filter((region) =>
+          selectParent.childrenIdList.includes(region.id)
+        );
+        setChileRegions(children);
+      }
+    } else {
+      setChileRegions([]);
+    }
+  }, [selectedParentId, regions]);
+
+  const handleParentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const parentId = e.target.value ? Number(e.target.value) : null;
+    setSelectedParentId(parentId);
+  };
+
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value, checked } = e.target;
+    setSearchParams((prev) => ({
+      ...prev,
+      category: checked ? value : "",
+    }));
+  };
+
+  const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSearchParams((prev) => ({
+      ...prev,
+      sort: e.target.value,
+    }));
+  };
 
   return (
     <>
@@ -47,6 +123,13 @@ export default function StoreFindSideBar({
                 type="text"
                 placeholder="가맹점명, 주소 검색"
                 className="pl-10 w-full"
+                value={searchParams?.keyword || ""}
+                onChange={(e) =>
+                  setSearchParams((prev) => ({
+                    ...prev,
+                    keyword: e.target.value,
+                  }))
+                }
               />
             </div>
 
@@ -55,16 +138,38 @@ export default function StoreFindSideBar({
               <h3 className="font-semibold text-gray-900">지역 선택</h3>
               <div className="grid grid-cols-1 gap-2">
                 <div className="relative">
-                  <select className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10">
-                    <option>경기도</option>
+                  <select
+                    value={searchParams?.region || ""}
+                    onChange={(e) =>
+                      setSearchParams((prev) => ({
+                        ...prev,
+                        region: e.target.value,
+                      }))
+                    }
+                    className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10"
+                  >
+                    <option value="">시/도 선택</option>
+                    {parentRegions.map((region) => (
+                      <option key={region.id} value={region.id}>
+                        {region.name}
+                      </option>
+                    ))}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                     <ChevronDown className="h-4 w-4" />
                   </div>
                 </div>
                 <div className="relative">
-                  <select className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10">
-                    <option>시흥시</option>
+                  <select
+                    disabled={!selectedParentId}
+                    className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10"
+                  >
+                    <option value="">시/군/구 선택</option>
+                    {childRegions.map((region) => (
+                      <option key={region.id} value={region.id}>
+                        {region.name}
+                      </option>
+                    ))}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                     <ChevronDown className="h-4 w-4" />
@@ -83,6 +188,8 @@ export default function StoreFindSideBar({
                       type="checkbox"
                       key={category.id}
                       value={category.name}
+                      checked={searchParams?.category === category.name}
+                      onChange={handleCategoryChange}
                     />
                     <label
                       htmlFor={category.name}
@@ -100,9 +207,14 @@ export default function StoreFindSideBar({
             <div className="space-y-3">
               <h3 className="font-semibold text-gray-900">정렬</h3>
               <div className="relative">
-                <select className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10">
-                  <option>추천순</option>
-                  <option>거리순</option>
+                <select
+                  value={searchParams?.sort}
+                  onChange={handleSortChange}
+                  className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10"
+                >
+                  <option value="popularity">인기순</option>
+                  <option value="distance">가까운 순</option>
+                  <option value="discount">할인률 순</option>
                 </select>
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                   <ChevronDown className="h-4 w-4" />

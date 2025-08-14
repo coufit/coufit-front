@@ -14,20 +14,16 @@ import {
 import { useState, useEffect } from "react";
 
 interface StoreMapProps {
-  initialStores: Store[];
+  stores: Store[];
   currentLocation?: { latitude: number; longitude: number };
 }
 
-export default function KakaoMap({
-  initialStores,
-  currentLocation,
-}: StoreMapProps) {
+export default function KakaoMap({ stores, currentLocation }: StoreMapProps) {
   const [loading, error] = useKakaoLoader({
     appkey: process.env.NEXT_PUBLIC_MAPS_APP_KEY!,
     libraries: ["services", "clusterer", "drawing"],
   });
 
-  const [stores, setStores] = useState<Store[]>(initialStores);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [hoveredStoreId, setHoverStoreId] = useState<number | null>(null);
   //const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -37,12 +33,6 @@ export default function KakaoMap({
     lat: currentLocation?.latitude || 37.512453,
     lng: currentLocation?.longitude || 127.01890122222221,
   });
-
-  // initialStores 업데이트 시 stores 상태 갱신
-  useEffect(() => {
-    console.log("initialStores:", initialStores);
-    setStores(initialStores);
-  }, [initialStores]);
 
   // currentLocation 변경 시 중심 좌표 갱신
   useEffect(() => {
