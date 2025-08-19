@@ -35,10 +35,7 @@ export default function StoreFind() {
     sort: "popularity",
   });
 
-  // ⭐️ 두 개의 useEffect를 하나로 통합하여 무한 호출 방지
   useEffect(() => {
-    // URL 쿼리 파라미터에서 초기 키워드를 가져와 searchParams 상태를 초기화
-    // 이 로직은 searchParamsFromUrl이 변경될 때만 실행됩니다.
     const keywordFromUrl = searchParamsFromUrl.get("keyword");
     if (keywordFromUrl) {
       setSearchParams((prev) => ({ ...prev, keyword: keywordFromUrl }));
@@ -87,6 +84,11 @@ export default function StoreFind() {
           },
         });
 
+        if (res.status === 403) {
+          console.error("api 호출 오류: 유효하지 않은 토큰");
+          return;
+        }
+
         if (!res.ok) {
           throw new Error("네트워크 에러");
         }
@@ -100,12 +102,11 @@ export default function StoreFind() {
         }
       } catch (error) {
         console.error("API 호출 오류:", error);
-        setStores([]);
       }
     };
 
     fetchStores();
-  }, [searchParams, userCurrentLocation, searchParamsFromUrl]); // ⭐️ 종속성 배열을 하나로 통합
+  }, [searchParams, userCurrentLocation, searchParamsFromUrl, router]);
 
   const toggleSidebar = () => {
     setIsSideBarOpen((prev) => !prev);

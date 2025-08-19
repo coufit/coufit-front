@@ -1,12 +1,15 @@
 import { X, MapPin } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, SetStateAction, Dispatch } from "react";
 import { Store } from "@/lib/types/store";
+import { SearchParams } from "@/lib/types/searchParams";
 
 interface StoreListProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenDetail: (storeId: number) => void;
   stores: Store[];
+  searchParams: SearchParams;
+  setSearchParams: Dispatch<SetStateAction<SearchParams>>;
 }
 
 export default function StoreList({

@@ -2,12 +2,13 @@
 import { useState, useEffect } from "react";
 import { Search, ChevronDown, X } from "lucide-react";
 import { Region } from "@/lib/types/region";
+import { SearchParams } from "@/lib/types/searchParams";
 
 interface StoreFindSideBarProps {
   isOpen: boolean;
   onClose: () => void;
-  searchParams: any;
-  setSearchParams: (params: any) => void;
+  searchParams: SearchParams;
+  setSearchParams: (params: (prev: SearchParams) => SearchParams) => void;
 }
 
 export default function StoreFindSideBar({
@@ -81,6 +82,22 @@ export default function StoreFindSideBar({
   const handleParentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const parentId = e.target.value ? Number(e.target.value) : null;
     setSelectedParentId(parentId);
+
+    const selectedParent = parentRegions.find((p) => p.id === parentId);
+    setSearchParams((prev) => ({
+      ...prev,
+      region: selectedParent ? selectedParent.name : "",
+      area: "",
+    }));
+  };
+
+  const handleAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedAreaName = e.target.value;
+    console.log("Selected Area:", selectedAreaName);
+    setSearchParams((prev) => ({
+      ...prev,
+      area: selectedAreaName,
+    }));
   };
 
   const handleCategoryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,13 +156,8 @@ export default function StoreFindSideBar({
               <div className="grid grid-cols-1 gap-2">
                 <div className="relative">
                   <select
-                    value={searchParams?.region || ""}
-                    onChange={(e) =>
-                      setSearchParams((prev) => ({
-                        ...prev,
-                        region: e.target.value,
-                      }))
-                    }
+                    value={selectedParentId || ""}
+                    onChange={handleParentChange}
                     className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10"
                   >
                     <option value="">시/도 선택</option>
@@ -161,12 +173,14 @@ export default function StoreFindSideBar({
                 </div>
                 <div className="relative">
                   <select
+                    value={searchParams?.area || ""}
+                    onChange={handleAreaChange}
                     disabled={!selectedParentId}
                     className="w-full text-black p-2 rounded-md border appearance-none border-gray-300 pr-10"
                   >
                     <option value="">시/군/구 선택</option>
                     {childRegions.map((region) => (
-                      <option key={region.id} value={region.id}>
+                      <option key={region.id} value={region.name}>
                         {region.name}
                       </option>
                     ))}
