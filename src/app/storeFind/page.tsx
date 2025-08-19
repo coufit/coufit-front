@@ -25,15 +25,16 @@ export default function StoreFind() {
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
 
-  // 검색 파라미터 상태
-  const [searchParams, setSearchParams] = useState({
+  const initialSearchParams = {
     keyword: "",
     region: "",
     area: "",
     category: "",
     isOpenNow: false,
     sort: "popularity",
-  });
+  };
+  // 검색 파라미터 상태
+  const [searchParams, setSearchParams] = useState(initialSearchParams);
 
   useEffect(() => {
     const keywordFromUrl = searchParamsFromUrl.get("keyword");
@@ -116,6 +117,10 @@ export default function StoreFind() {
     setIsStoreListOverlayOpen((prev) => !prev);
   };
 
+  const handleResetFilters = () => {
+    setSearchParams(initialSearchParams);
+  };
+
   const handleOpenDetail = (storeId: number) => {
     console.log(`가맹점 상세 열기: ID ${storeId}`);
     const store = stores.find((s) => s.storeId === storeId);
@@ -175,9 +180,14 @@ export default function StoreFind() {
           onClose={toggleSidebar}
           searchParams={searchParams}
           setSearchParams={setSearchParams}
+          onReset={handleResetFilters}
         />
         <div className={`flex-1 transition-all duration-300 ease-in-out`}>
-          <KakaoMap stores={stores} currentLocation={userCurrentLocation} />
+          <KakaoMap
+            stores={stores}
+            currentLocation={userCurrentLocation}
+            onOpenDetail={handleOpenDetail}
+          />
         </div>
       </div>
       {isStoreListOverlayOpen && (

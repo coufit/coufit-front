@@ -9,6 +9,7 @@ interface StoreFindSideBarProps {
   onClose: () => void;
   searchParams: SearchParams;
   setSearchParams: (params: (prev: SearchParams) => SearchParams) => void;
+  onReset: () => void;
 }
 
 export default function StoreFindSideBar({
@@ -16,6 +17,7 @@ export default function StoreFindSideBar({
   onClose,
   searchParams,
   setSearchParams,
+  onReset,
 }: StoreFindSideBarProps) {
   const categories = [
     { id: 1, name: "음식점", icon: "🍽️" },
@@ -127,7 +129,7 @@ export default function StoreFindSideBar({
           <div className="px-6 py-6 space-y-6 h-full overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <h3 className="font-semibold text-gray-900">필터</h3>
-              <button>
+              <button onClick={onClose}>
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -237,7 +239,12 @@ export default function StoreFindSideBar({
             </div>
 
             {/* 필터 초기화 */}
-            <button className="p-2 w-full bg-transparent border border-gray-300 rounded-md font-medium text-gray-900">
+            <button
+              onClick={() => {
+                onReset();
+              }}
+              className="p-2 w-full bg-transparent border border-gray-300 rounded-md font-medium text-gray-900"
+            >
               필터 초기화
             </button>
           </div>
