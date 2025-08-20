@@ -8,7 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, Phone } from "lucide-react";
+import { Button } from "../ui/button";
+import { Clock, MapPin, Phone, Navigation, Share } from "lucide-react";
 import { Store } from "@/lib/types/store";
 
 interface StoreDetailModalProps {
@@ -34,6 +35,42 @@ export default function StoreDetailModal({
   }, [isOpen]);
 
   if (!isOpen || !store) return null;
+
+  const userCurrentLocation = {
+    latitude: 37.5007861,
+    longitude: 127.0368861,
+  };
+
+  const handleFindRoute = () => {
+    if (!store) return;
+
+    const userLat = userCurrentLocation.latitude;
+    const userLng = userCurrentLocation.longitude;
+    const userLocationName = "출발지";
+
+    const encodedUserLocationName = encodeURIComponent(userLocationName);
+    const encodedStoreName = encodeURIComponent(store.name);
+
+    const url = `https://map.kakao.com/link/to/${encodedStoreName},${store.latitude},${store.longitude}?from=${encodedUserLocationName}&sX=${userLng}&sY=${userLat}`;
+    window.open(url, "_blank");
+  };
+
+  const handleShare = async () => {
+    if (!store) return;
+
+    const encodedStoreName = encodeURIComponent(store.name);
+    const mapLink = `https://map.kakao.com/link/map/${encodedStoreName},${store.latitude},${store.longitude}`;
+
+    navigator.clipboard
+      .writeText(mapLink)
+      .then(() => {
+        alert("카카오맵 링크가 클립보드에 복사되었습니다.");
+      })
+      .catch((err) => {
+        console.log("클립보드 복사 실패: ", err);
+        alert("링크 복사 실패");
+      });
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -106,6 +143,23 @@ export default function StoreDetailModal({
             </div>
 
             {/* 액션 버튼 */}
+            <div className="flex space-x-3">
+              <Button
+                onClick={handleFindRoute}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 justify-center"
+              >
+                <Navigation className="w-4 h-4 mr-2" />
+                길찾기
+              </Button>
+              <Button
+                onClick={handleShare}
+                variant="ghost"
+                className="flex-1 bg-transparent border justify-center"
+              >
+                <Share className="w-4 h-4 mr-2" />
+                공유하기
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
