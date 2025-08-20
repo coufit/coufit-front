@@ -1,44 +1,140 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { List, ArrowLeft, Search } from "lucide-react";
-import KakaoMap from "../components/stores/KakaoMap";
-import StoreList from "../components/StoreList";
-import StoreFindSideBar from "../components/stores/StoreFindSideBar";
-
-interface Store {
-  storeId: number;
-  name: string;
-  latitude: number;
-  longitude: number;
-  category: string;
-}
+import KakaoMap from "@/components/storeFind/KakaoMap";
+import StoreList from "@/components/storeFind/StoreList";
+import StoreFindSideBar from "@/components/storeFind/StoreFindSideBar";
+import { Store } from "@/lib/types/store";
+import StoreDetailModal from "@/components/storeFind/StoreDetailModal";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function StoreFind() {
-  const dummyStores: Store[] = [
-    {
-      storeId: 1,
-      name: "멋진 카페",
-      latitude: 37.5665,
-      longitude: 126.978,
-      category: "카페",
-    },
-    {
-      storeId: 2,
-      name: "맛있는 식당",
-      latitude: 37.568,
-      longitude: 126.98,
-      category: "한식",
-    },
-  ];
+  const router = useRouter();
 
+  const searchParamsFromUrl = useSearchParams();
+
+  // 사용자 현재 위치 (가정)
   const userCurrentLocation = {
-    latitude: 37.4444053361,
-    longitude: 126.7992573088,
+    latitude: 37.5007861,
+    longitude: 127.0368861,
   };
 
+  const [stores, setStores] = useState<Store[]>([]);
+  const [mapCenter, setMapCenter] = useState(userCurrentLocation);
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
   const [isStoreListOverlayOpen, setIsStoreListOverlayOpen] = useState(false);
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  const initialSearchParams = {
+    keyword: "",
+    region: "",
+    area: "",
+    category: "",
+    isOpenNow: false,
+    sort: "popularity",
+  };
+  // 검색 파라미터 상태
+  const [searchParams, setSearchParams] = useState(initialSearchParams);
+
+  useEffect(() => {
+    const keywordFromUrl = searchParamsFromUrl.get("keyword");
+    if (keywordFromUrl) {
+      setSearchParams((prev) => ({ ...prev, keyword: keywordFromUrl }));
+    }
+
+    // API 호출 함수
+    const fetchStores = async () => {
+      const token = localStorage.getItem("authToken");
+
+      if (!token) {
+        console.warn("API 호출 실패: 인증 토큰이 없습니다.");
+        setStores([]);
+        return;
+      }
+
+      try {
+        const params = new URLSearchParams();
+        if (searchParams.keyword) {
+          params.append("keyword", searchParams.keyword);
+        }
+        if (searchParams.region) {
+          params.append("region", searchParams.region);
+        }
+        if (searchParams.area) {
+          params.append("area", searchParams.area);
+        }
+        if (searchParams.category) {
+          params.append("category", searchParams.category);
+        }
+        if (searchParams.isOpenNow) {
+          params.append("isOpenNow", "true");
+        }
+        if (searchParams.sort) {
+          params.append("sort", searchParams.sort);
+        }
+        params.append("latitude", userCurrentLocation.latitude.toString());
+        params.append("longitude", userCurrentLocation.longitude.toString());
+
+        const api = `${
+          process.env.NEXT_PUBLIC_API_BASE_URL
+        }/api/stores/search?${params.toString()}`;
+
+        const res = await fetch(api, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.status === 403) {
+          console.error("api 호출 오류: 유효하지 않은 토큰");
+          return;
+        }
+
+        if (!res.ok) {
+          throw new Error("네트워크 에러");
+        }
+        const data = await res.json();
+
+        if (data.code === 200) {
+          const fetchedStores: Store[] = data.data.storeList;
+          setStores(fetchedStores);
+
+          if (searchParams.area) {
+            if (fetchedStores.length > 0) {
+              const newCenter = calculateCenterOfStores(fetchedStores);
+              setMapCenter(newCenter);
+            } else {
+              setMapCenter(userCurrentLocation);
+            }
+          } else {
+            setMapCenter(userCurrentLocation);
+          }
+        } else {
+          console.error("API 응답 오류:", data.message);
+          setStores([]);
+          setMapCenter(userCurrentLocation);
+        }
+      } catch (error) {
+        console.error("API 호출 오류:", error);
+      }
+    };
+
+    fetchStores();
+  }, [searchParams, userCurrentLocation, searchParamsFromUrl, router]);
+
+  const calculateCenterOfStores = (stores: Store[]) => {
+    if (stores.length === 0) {
+      return userCurrentLocation;
+    }
+    const totalLat = stores.reduce((sum, store) => sum + store.latitude, 0);
+    const totalLng = stores.reduce((sum, store) => sum + store.longitude, 0);
+    return {
+      latitude: totalLat / stores.length,
+      longitude: totalLng / stores.length,
+    };
+  };
 
   const toggleSidebar = () => {
     setIsSideBarOpen((prev) => !prev);
@@ -48,21 +144,39 @@ export default function StoreFind() {
     setIsStoreListOverlayOpen((prev) => !prev);
   };
 
+  const handleResetFilters = () => {
+    setSearchParams(initialSearchParams);
+  };
+
+  const handleOpenDetail = (storeId: number) => {
+    console.log(`가맹점 상세 열기: ID ${storeId}`);
+    const store = stores.find((s) => s.storeId === storeId);
+    if (store) {
+      setSelectedStore(store);
+      setIsDetailModalOpen(true);
+    }
+  };
+
+  const handleCloseDetailModal = () => {
+    setIsDetailModalOpen(false);
+    setSelectedStore(null);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Header */}
-      <header className="border-b bg-white sticky top-0 z-50">
+      <header className="border-b bg-white sticky top-0 z-30">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-16">
-              <button className="flex flex-row items-center justify-center gap-2">
+              <button
+                onClick={() => router.push("/")}
+                className="flex flex-row items-center justify-center gap-2 text-black"
+              >
                 <ArrowLeft className="w-4 h-4" />
                 뒤로
               </button>
               <div className="flex items-center space-x-4">
-                <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-sm">지</span>
-                </div>
                 <span className="text-xl font-bold text-gray-900">
                   가맹점 찾기
                 </span>
@@ -88,11 +202,19 @@ export default function StoreFind() {
         </div>
       </header>
       <div className="flex flex-1 overflow-hidden relative">
-        <StoreFindSideBar isOpen={isSideBarOpen} onClose={toggleSidebar} />
+        <StoreFindSideBar
+          isOpen={isSideBarOpen}
+          onClose={toggleSidebar}
+          searchParams={searchParams}
+          setSearchParams={setSearchParams}
+          onReset={handleResetFilters}
+        />
         <div className={`flex-1 transition-all duration-300 ease-in-out`}>
           <KakaoMap
-            initialStores={dummyStores}
+            stores={stores}
+            mapCenter={mapCenter}
             currentLocation={userCurrentLocation}
+            onOpenDetail={handleOpenDetail}
           />
         </div>
       </div>
@@ -100,8 +222,17 @@ export default function StoreFind() {
         <StoreList
           isOpen={isStoreListOverlayOpen}
           onClose={toggleStoreListOverlay}
+          onOpenDetail={handleOpenDetail}
+          stores={stores}
+          searchParams={searchParams}
+          setSearchParams={setSearchParams}
         />
       )}
+      <StoreDetailModal
+        store={selectedStore}
+        isOpen={isDetailModalOpen}
+        onClose={handleCloseDetailModal}
+      />
     </div>
   );
 }

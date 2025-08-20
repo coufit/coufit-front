@@ -66,18 +66,15 @@ export const PopularStores: React.FC = () => {
                 <h3 className="font-bold text-lg mb-2">{store.name}</h3>
                 <div className="flex items-center justify-between mb-2">
                   <Badge variant="secondary">{store.category}</Badge>
-                  <div className="flex items-center">
+                  {/* <div className="flex items-center">
                     <Star className="w-4 h-4 text-yellow-400 fill-current" />
                     <span className="text-sm text-gray-600 ml-1">
                       {store.rating}
                     </span>
-                  </div>
+                  </div> */}
                 </div>
                 <div className="flex items-center justify-between text-sm text-gray-600">
                   <span>{store.distance}</span>
-                  <span className="text-emerald-600 font-semibold">
-                    {store.discount} 할인
-                  </span>
                 </div>
               </CardContent>
             </Card>
