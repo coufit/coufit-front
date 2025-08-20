@@ -1,19 +1,13 @@
 import { User, Lock } from "lucide-react";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogHeader,
-  DialogDescription,
-} from "./ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogHeader } from "./ui/dialog";
 
 interface LoginModalProps {
   loginModalOpen: boolean;
   setloginModalOpen: React.Dispatch<React.SetStateAction<boolean>>;
 }
 import { Button } from "./ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 export default function LoginModal({
   loginModalOpen,
   setloginModalOpen,
@@ -39,34 +33,44 @@ export default function LoginModal({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: "test@test.com",
-          password: "1234",
+          email,
+          password,
         }),
       });
 
       if (response.ok) {
         const data = await response.json();
         console.log("로그인 성공", data);
+        localStorage.setItem("authToken", data.token);
         alert("로그인 성공");
         setloginModalOpen(false);
       } else {
-        alert("로그인 실패");
+        const errorData = await response.json();
+        setError(errorData.message || "로그인 실패");
       }
     } catch (error) {
-      setError("네트워크 에러");
+      console.error("네트워크 에러:", error);
+      setError("네트워크 에러가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    } finally {
+      setLoading(false);
     }
   };
+  useEffect(() => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      console.log("로그인 상태입니다.");
+    } else {
+      console.log("로그인 필요");
+    }
+  }, []);
 
   return (
     <Dialog open={loginModalOpen} onOpenChange={setloginModalOpen}>
       <DialogContent className="max-w-md z-[100]">
         <DialogHeader>
-          <DialogTitle className="text-center text-2xl font-bold">
+          <DialogTitle className="text-center text-gray-700 text-2xl font-bold">
             로그인
           </DialogTitle>
-          <DialogDescription className="sr-only">
-            로그인 모달입니다.
-          </DialogDescription>
         </DialogHeader>
         <div className="space-y-6">
           <div className="space-y-4">
@@ -76,7 +80,7 @@ export default function LoginModal({
                 아이디
               </label>
               <input
-                className="w-full"
+                className="w-full text-black"
                 placeholder="아이디를 입력하세요"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -88,7 +92,7 @@ export default function LoginModal({
                 비밀번호
               </label>
               <input
-                className="w-full"
+                className="w-full text-black"
                 type="password"
                 placeholder="비밀번호를 입력하세요"
                 value={password}
@@ -96,12 +100,12 @@ export default function LoginModal({
               />
             </div>
           </div>
-
+          {error && <p className="text-red-500 text-sm text-center">{error}</p>}
           <Button
             onClick={handleLogin}
             className="w-full bg-emerald-600 hover:bg-emerald-700 items-center justify-center"
           >
-            로그인
+            {loading ? "로그인 중..." : "로그인"}
           </Button>
         </div>
       </DialogContent>

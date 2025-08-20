@@ -1,24 +1,15 @@
 import { X, MapPin } from "lucide-react";
-import { useState, useEffect } from "react";
-
-interface Store {
-  storeId: number;
-  name: string;
-  latitude: number;
-  longitude: number;
-  category: string;
-  isOpen: boolean;
-  address: string;
-  distance: string;
-  hours: string;
-  phone: string;
-}
+import { useState, useEffect, SetStateAction, Dispatch } from "react";
+import { Store } from "@/lib/types/store";
+import { SearchParams } from "@/lib/types/searchParams";
 
 interface StoreListProps {
   isOpen: boolean;
   onClose: () => void;
   onOpenDetail: (storeId: number) => void;
   stores: Store[];
+  searchParams: SearchParams;
+  setSearchParams: Dispatch<SetStateAction<SearchParams>>;
 }
 
 export default function StoreList({
@@ -59,7 +50,7 @@ export default function StoreList({
             <div className="flex items-center space-x-2">
               <span className="text-sm text-gray-500">{stores.length}개</span>
               <button onClick={onClose}>
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-gray-500" />
               </button>
             </div>
           </div>
@@ -78,10 +69,12 @@ export default function StoreList({
                         <h4 className="font-semibold text-gray-900">
                           {store.name}
                         </h4>
-                        <div className="text-xs">{store.category}</div>
+                        <div className="text-xs text-black">
+                          {store.categoryName}
+                        </div>
                         <div
                           className={`w-2 h-2 rounded-full ${
-                            store.isOpen ? "bg-green-500" : "bg-red-500"
+                            store.isOpenNow ? "bg-green-500" : "bg-red-500"
                           }`}
                         ></div>
                       </div>
@@ -92,7 +85,7 @@ export default function StoreList({
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-gray-500">
-                            {store.distance}
+                            {store.distance}m
                           </span>
                         </div>
                       </div>

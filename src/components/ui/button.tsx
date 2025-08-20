@@ -14,7 +14,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const variantStyles = {
       default:
         "bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500",
-      ghost: "bg-transparent hover:bg-gray-100 focus:ring-gray-200",
+      ghost: "bg-transparent hover:bg-gray-100 focus:ring-gray-200 text-black",
     };
     const sizeStyles = {
       sm: "h-8 px-3 text-sm",

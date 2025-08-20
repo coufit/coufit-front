@@ -1,6 +1,8 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
+import coufit from "../../public/icon/coufit.png";
+import Image from "next/image";
 
 interface HeaderProps {
   sidebarOpen: boolean;
@@ -35,7 +37,7 @@ const Header: React.FC<HeaderProps> = ({
           </Button>
           <div className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-sm">지</span>
+              <Image src={coufit} alt="Coufit 아이콘" width={32} height={32} />
             </div>
             <span className="text-xl font-bold text-gray-900">Coufit</span>
           </div>

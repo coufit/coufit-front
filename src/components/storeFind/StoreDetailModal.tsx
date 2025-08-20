@@ -6,23 +6,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, Phone } from "lucide-react";
-
-interface Store {
-  storeId: number;
-  name: string;
-  latitude: number;
-  longitude: number;
-  category: string;
-  isOpen: boolean;
-  address: string;
-  distance: string;
-  hours: string;
-  phone: string;
-}
+import { Button } from "../ui/button";
+import { Clock, MapPin, Phone, Navigation, Share } from "lucide-react";
+import { Store } from "@/lib/types/store";
 
 interface StoreDetailModalProps {
   store: Store | null;
@@ -48,16 +36,52 @@ export default function StoreDetailModal({
 
   if (!isOpen || !store) return null;
 
+  const userCurrentLocation = {
+    latitude: 37.5007861,
+    longitude: 127.0368861,
+  };
+
+  const handleFindRoute = () => {
+    if (!store) return;
+
+    const userLat = userCurrentLocation.latitude;
+    const userLng = userCurrentLocation.longitude;
+    const userLocationName = "출발지";
+
+    const encodedUserLocationName = encodeURIComponent(userLocationName);
+    const encodedStoreName = encodeURIComponent(store.name);
+
+    const url = `https://map.kakao.com/link/to/${encodedStoreName},${store.latitude},${store.longitude}?from=${encodedUserLocationName}&sX=${userLng}&sY=${userLat}`;
+    window.open(url, "_blank");
+  };
+
+  const handleShare = async () => {
+    if (!store) return;
+
+    const encodedStoreName = encodeURIComponent(store.name);
+    const mapLink = `https://map.kakao.com/link/map/${encodedStoreName},${store.latitude},${store.longitude}`;
+
+    navigator.clipboard
+      .writeText(mapLink)
+      .then(() => {
+        alert("카카오맵 링크가 클립보드에 복사되었습니다.");
+      })
+      .catch((err) => {
+        console.log("클립보드 복사 실패: ", err);
+        alert("링크 복사 실패");
+      });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-md z-[100]">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>{store?.name}</span>
+          <DialogTitle className="text-black flex items-center justify-between">
+            <span className="flex flex-row gap-2 items-center">
+              {store?.name}
+              <div className="text-emerald-600 text-sm">{store.distance}m</div>
+            </span>
           </DialogTitle>
-          <DialogDescription className="sr-only">
-            {store.name}의 상세 정보 모달입니다.
-          </DialogDescription>
         </DialogHeader>
 
         {store && (
@@ -65,19 +89,21 @@ export default function StoreDetailModal({
             {/* 기본 정보 */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <Badge variant="secondary">{store.category}</Badge>
+                <Badge className="mt-2 " variant="secondary">
+                  {store.categoryName}
+                </Badge>
                 <div className="flex items-center space-x-2">
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      store.isOpen ? "bg-green-500" : "bg-red-500"
+                      store.isOpenNow ? "bg-green-500" : "bg-red-500"
                     }`}
                   ></div>
                   <span
                     className={`text-sm ${
-                      store.isOpen ? "text-green-600" : "text-red-600"
+                      store.isOpenNow ? "text-green-600" : "text-red-600"
                     }`}
                   >
-                    {store.isOpen ? "영업중" : "영업종료"}
+                    {store.isOpenNow ? "영업중" : "영업종료"}
                   </span>
                 </div>
               </div>
@@ -88,32 +114,52 @@ export default function StoreDetailModal({
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
-                  <div className="font-medium">주소</div>
-                  <div className="text-gray-600 text-sm">{store.address}</div>
-                  <div className="text-emerald-600 text-sm">
-                    {store.distance} 거리
+                  <div className="font-medium text-black flex flex-row gap-2 items-center">
+                    주소
                   </div>
+                  <div className="text-gray-600 text-sm">{store.address}</div>
                 </div>
               </div>
 
               <div className="flex items-start space-x-3">
                 <Clock className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
-                  <div className="font-medium">영업시간</div>
-                  <div className="text-gray-600 text-sm">{store.hours}</div>
+                  <div className="font-medium text-black">영업시간</div>
+                  <div className="text-gray-600 text-sm">
+                    {store.openTime.slice(0, 5)} - {store.closeTime.slice(0, 5)}
+                  </div>
                 </div>
               </div>
 
               <div className="flex items-start space-x-3">
                 <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
                 <div>
-                  <div className="font-medium">전화번호</div>
-                  <div className="text-gray-600 text-sm">{store.phone}</div>
+                  <div className="font-medium text-black">전화번호</div>
+                  <div className="text-gray-600 text-sm">
+                    {store.phoneNumber}
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* 액션 버튼 */}
+            <div className="flex space-x-3">
+              <Button
+                onClick={handleFindRoute}
+                className="flex-1 bg-emerald-600 hover:bg-emerald-700 justify-center"
+              >
+                <Navigation className="w-4 h-4 mr-2" />
+                길찾기
+              </Button>
+              <Button
+                onClick={handleShare}
+                variant="ghost"
+                className="flex-1 bg-transparent border justify-center"
+              >
+                <Share className="w-4 h-4 mr-2" />
+                공유하기
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
