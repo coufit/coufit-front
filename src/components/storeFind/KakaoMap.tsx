@@ -14,8 +14,9 @@ import { useState, useEffect } from "react";
 
 interface StoreMapProps {
   stores: Store[];
-  currentLocation?: { latitude: number; longitude: number };
+  mapCenter: { latitude: number; longitude: number };
   onOpenDetail: (storeId: number) => void;
+  currentLocation?: { latitude: number; longitude: number };
 }
 
 const categoryIcons: { [key: string]: string } = {
@@ -33,8 +34,9 @@ const categoryIcons: { [key: string]: string } = {
 
 export default function KakaoMap({
   stores,
-  currentLocation,
+  mapCenter,
   onOpenDetail,
+  currentLocation,
 }: StoreMapProps) {
   const [loading, error] = useKakaoLoader({
     appkey: process.env.NEXT_PUBLIC_MAPS_APP_KEY!,
@@ -45,19 +47,17 @@ export default function KakaoMap({
 
   // 중심 좌표를 동적으로 관리
   const [center, setCenter] = useState({
-    lat: currentLocation?.latitude || 37.512453,
-    lng: currentLocation?.longitude || 127.01890122222221,
+    lat: mapCenter.latitude,
+    lng: mapCenter.longitude,
   });
 
   // currentLocation 변경 시 중심 좌표 갱신
   useEffect(() => {
-    if (currentLocation) {
-      setCenter({
-        lat: currentLocation.latitude,
-        lng: currentLocation.longitude,
-      });
-    }
-  }, [currentLocation]);
+    setCenter({
+      lat: mapCenter.latitude,
+      lng: mapCenter.longitude,
+    });
+  }, [mapCenter]);
 
   if (loading) return <div>지도 로드 중...</div>;
   if (error) return <div>지도 로드 오류: {error.message}</div>;

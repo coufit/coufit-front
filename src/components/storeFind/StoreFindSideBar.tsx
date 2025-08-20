@@ -95,7 +95,6 @@ export default function StoreFindSideBar({
 
   const handleAreaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const selectedAreaName = e.target.value;
-    console.log("Selected Area:", selectedAreaName);
     setSearchParams((prev) => ({
       ...prev,
       area: selectedAreaName,

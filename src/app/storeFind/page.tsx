@@ -20,6 +20,7 @@ export default function StoreFind() {
   };
 
   const [stores, setStores] = useState<Store[]>([]);
+  const [mapCenter, setMapCenter] = useState(userCurrentLocation);
   const [isSideBarOpen, setIsSideBarOpen] = useState(false);
   const [isStoreListOverlayOpen, setIsStoreListOverlayOpen] = useState(false);
   const [selectedStore, setSelectedStore] = useState<Store | null>(null);
@@ -96,10 +97,23 @@ export default function StoreFind() {
         const data = await res.json();
 
         if (data.code === 200) {
-          setStores(data.data.storeList);
+          const fetchedStores: Store[] = data.data.storeList;
+          setStores(fetchedStores);
+
+          if (searchParams.area) {
+            if (fetchedStores.length > 0) {
+              const newCenter = calculateCenterOfStores(fetchedStores);
+              setMapCenter(newCenter);
+            } else {
+              setMapCenter(userCurrentLocation);
+            }
+          } else {
+            setMapCenter(userCurrentLocation);
+          }
         } else {
           console.error("API 응답 오류:", data.message);
           setStores([]);
+          setMapCenter(userCurrentLocation);
         }
       } catch (error) {
         console.error("API 호출 오류:", error);
@@ -108,6 +122,18 @@ export default function StoreFind() {
 
     fetchStores();
   }, [searchParams, userCurrentLocation, searchParamsFromUrl, router]);
+
+  const calculateCenterOfStores = (stores: Store[]) => {
+    if (stores.length === 0) {
+      return userCurrentLocation;
+    }
+    const totalLat = stores.reduce((sum, store) => sum + store.latitude, 0);
+    const totalLng = stores.reduce((sum, store) => sum + store.longitude, 0);
+    return {
+      latitude: totalLat / stores.length,
+      longitude: totalLng / stores.length,
+    };
+  };
 
   const toggleSidebar = () => {
     setIsSideBarOpen((prev) => !prev);
@@ -185,6 +211,7 @@ export default function StoreFind() {
         <div className={`flex-1 transition-all duration-300 ease-in-out`}>
           <KakaoMap
             stores={stores}
+            mapCenter={mapCenter}
             currentLocation={userCurrentLocation}
             onOpenDetail={handleOpenDetail}
           />
