@@ -14,7 +14,7 @@ export const Badge: React.FC<BadgeProps> = ({
   ...props
 }) => {
   const variantStyles = {
-    default: "bg-gray-100 text-gray-800",
+    default: "bg-gray-100 text-gray-800 ",
     secondary: "bg-emerald-100 text-emerald-800",
     destructive: "bg-red-100 text-red-800",
   };

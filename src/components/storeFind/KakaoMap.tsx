@@ -1,99 +1,113 @@
 "use client";
 
-import { Store as StoreIcon } from "lucide-react";
+import { Store } from "@/lib/types/store";
+import { Badge } from "../ui/badge";
 
 import {
   Map,
   MapMarker,
   useKakaoLoader,
-  MapInfoWindow,
+  CustomOverlayMap,
 } from "react-kakao-maps-sdk";
 
 import { useState, useEffect } from "react";
 
-interface Store {
-  storeId: number;
-  name: string;
-  latitude: number;
-  longitude: number;
-  category: string;
-}
-
 interface StoreMapProps {
-  initialStores: Store[];
+  stores: Store[];
+  mapCenter: { latitude: number; longitude: number };
+  onOpenDetail: (storeId: number) => void;
   currentLocation?: { latitude: number; longitude: number };
 }
 
+const categoryIcons: { [key: string]: string } = {
+  음식점: "🍽️",
+  교육: "📚",
+  마트: "🛒",
+  미용: "💄",
+  생활: "🏠",
+  스포츠: "🏃‍♀️",
+  의료: "🏥",
+  제조: "🏭",
+  숙박: "🏘️",
+  잡화: "🛍️",
+};
+
 export default function KakaoMap({
-  initialStores,
+  stores,
+  mapCenter,
+  onOpenDetail,
   currentLocation,
 }: StoreMapProps) {
-  useKakaoLoader({
+  const [loading, error] = useKakaoLoader({
     appkey: process.env.NEXT_PUBLIC_MAPS_APP_KEY!,
     libraries: ["services", "clusterer", "drawing"],
   });
 
-  const [stores, setStores] = useState<Store[]>(initialStores);
-  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-  const [hoveredStoreId, setHoverStoreId] = useState<number | null>(null);
-  //const [isInfoOpen, setIsInfoOpen] = useState(false);
+  const [hoveredStoreId, setHoveredStoreId] = useState<number | null>(null);
 
-  const initialCenter = currentLocation
-    ? { lat: currentLocation.latitude, lng: currentLocation.longitude }
-    : stores.length > 0
-    ? {
-        lat: stores[0].latitude,
-        lng: stores[0].longitude,
-      }
-    : {
-        lat: 37.4444053361,
-        lng: 126.7992573088,
-      };
+  // 중심 좌표를 동적으로 관리
+  const [center, setCenter] = useState({
+    lat: mapCenter.latitude,
+    lng: mapCenter.longitude,
+  });
 
+  // currentLocation 변경 시 중심 좌표 갱신
   useEffect(() => {
-    setStores(initialStores);
-  }, [initialStores]);
+    setCenter({
+      lat: mapCenter.latitude,
+      lng: mapCenter.longitude,
+    });
+  }, [mapCenter]);
 
-  const handleMarkerClick = (store: Store) => {
-    setSelectedStore(store);
-    //setIsInfoOpen(true);
-  };
-
-  // const handleCloseModal = () => {
-  //   setIsInfoOpen(false);
-  //   setSelectedStore(null);
-  // };
+  if (loading) return <div>지도 로드 중...</div>;
+  if (error) return <div>지도 로드 오류: {error.message}</div>;
 
   return (
     <div className="h-[calc(100vh-64px)] relative">
-      <Map center={initialCenter} className="w-full h-full" level={4}>
-        {stores.map((store) => (
-          <MapMarker
-            key={store.storeId}
-            position={{ lat: store.latitude, lng: store.longitude }}
-            clickable={true}
-            onClick={() => handleMarkerClick(store)}
-            onMouseOver={() => setHoverStoreId(store.storeId)}
-            onMouseOut={() => setHoverStoreId(null)}
-          >
-            <div className="w-8 h-8 bg-emerald-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-              <StoreIcon className="w-4 h-4 text-white" />
-            </div>
+      <Map center={center} className="w-full h-full" level={4}>
+        {stores.map((store) => {
+          const iconEmoji = categoryIcons[store.categoryName];
 
-            {hoveredStoreId === store.storeId && (
-              <MapInfoWindow
-                position={{ lat: store.latitude, lng: store.longitude }}
-                disableAutoPan={true}
-                removable={false}
+          return (
+            <CustomOverlayMap
+              key={store.storeId}
+              position={{ lat: store.latitude, lng: store.longitude }}
+              yAnchor={1}
+            >
+              <div
+                className="relative"
+                onMouseOver={() => setHoveredStoreId(store.storeId)}
+                onMouseOut={() => setHoveredStoreId(null)}
               >
-                <div>
-                  <div>{store.name}</div>
-                  <div>{store.category}</div>
+                <div
+                  onClick={() => onOpenDetail(store.storeId)}
+                  className="w-8 h-8 bg-emerald-600 rounded-full border-2 border-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform cursor-pointer"
+                >
+                  <span className="text-medium">{iconEmoji}</span>
                 </div>
-              </MapInfoWindow>
-            )}
-          </MapMarker>
-        ))}
+
+                {hoveredStoreId === store.storeId && (
+                  <div
+                    className="absolute bottom-10 left-1/2 -translate-x-1/2 p-2 space-y-1 bg-white rounded-md shadow-md border border-gray-200"
+                    style={{ whiteSpace: "nowrap" }}
+                  >
+                    <div className="flex flex-row gap-2 items-center">
+                      <Badge variant="secondary">{store.categoryName}</Badge>
+                      <h4 className="font-semibold text-gray-900">
+                        {store.name}
+                      </h4>
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          store.isOpenNow ? "bg-green-500" : "bg-red-500"
+                        }`}
+                      ></div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </CustomOverlayMap>
+          );
+        })}
 
         {currentLocation && (
           <MapMarker
@@ -102,9 +116,7 @@ export default function KakaoMap({
               lng: currentLocation.longitude,
             }}
             clickable={false}
-          >
-            <div className="w-4 h-4 bg-blue-600 rounded-full border-2 border-white shadow-lg animate-pulse"></div>
-          </MapMarker>
+          ></MapMarker>
         )}
       </Map>
     </div>

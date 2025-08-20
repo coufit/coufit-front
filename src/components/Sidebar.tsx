@@ -1,10 +1,9 @@
 // components/Sidebar.tsx
 "use client";
 import React from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { X, User, CreditCard, MapPin, Star } from "lucide-react";
-import AICustomModal from "@/components/AICustomModal";
+import { X, User, CreditCard, MapPin, Star, GiftIcon } from "lucide-react";
+import AICustomModal from "@/components/AicustomModal";
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -21,8 +20,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   setAiModalOpen,
   setCurrentPage,
 }) => {
-  const router = useRouter();
-
   return (
     <div
       className={`fixed inset-y-0 left-0 z-[80] w-80 bg-white shadow-2xl transform transition-transform duration-300 ease-in-out ${
@@ -80,22 +77,35 @@ const Sidebar: React.FC<SidebarProps> = ({
             <h4 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-3">
               소비 관리
             </h4>
-            <Button
-              variant="ghost"
-              className="w-full h-12 justify-start rounded-xl hover:bg-gray-50 transition-colors group px-0"
-              onClick={() => {
-                setSidebarOpen(false);
-                router.push("/wallet");
-              }}
-            >
-              <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center mr-3 group-hover:bg-blue-100 transition-colors">
-                <CreditCard className="w-4 h-4 text-blue-600" />
-              </div>
-              <div className="text-left">
-                <p className="font-medium text-gray-900">지갑 관리</p>
-                <p className="text-xs text-gray-500">잔액, 소비내역</p>
-              </div>
-            </Button>
+            <div className="space-y-1">
+              <Button
+                variant="ghost"
+                className="w-full h-12 justify-start rounded-xl hover:bg-gray-50 transition-colors group"
+                onClick={() => setCurrentPage("wallet")}
+              >
+                <div className="w-8 h-8 bg-blue-50 rounded-xl flex items-center justify-center mr-3 group-hover:bg-blue-100 transition-colors">
+                  <CreditCard className="w-4 h-4 text-blue-600" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium text-gray-900">소비 내역</p>
+                  <p className="text-xs text-gray-500">지출 분석 및 관리</p>
+                </div>
+              </Button>
+
+              <Button
+                variant="ghost"
+                className="w-full h-12 justify-start rounded-xl hover:bg-gray-50 transition-colors group"
+                onClick={() => setCurrentPage("points")}
+              >
+                <div className="w-8 h-8 bg-emerald-50 rounded-xl flex items-center justify-center mr-3 group-hover:bg-emerald-100 transition-colors">
+                  <GiftIcon className="w-4 h-4 text-emerald-600" />
+                </div>
+                <div className="text-left">
+                  <p className="font-medium text-gray-900">포인트 관리</p>
+                  <p className="text-xs text-gray-500">적립 및 사용 내역</p>
+                </div>
+              </Button>
+            </div>
           </div>
 
           {/* 가맹점 찾기 */}
